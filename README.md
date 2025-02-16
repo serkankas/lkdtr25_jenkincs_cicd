@@ -97,3 +97,65 @@ Jenkins, CI/CD süreçlerinde entegrasyon ve dağıtım işlemlerini otomatikle�
 
 - **Workspace**, Jenkins’in işlem yaptığı geçici çalışma alanıdır. Tüm dosyalar burada tutulur ancak işlem tamamlandığında temizlenebilir.  
 - **Artifact**, workspace içindeki belirli dosyaların saklanarak pipeline tamamlandıktan sonra da erişilebilir hâlde kalmasını sağlar.  
+
+## Gün 2  
+
+### **Yapılanlar**  
+
+Bugün Jenkins’i biraz daha ileri seviyeye taşıyarak, **master-slave yapılandırması**, **uzaktan tetikleme (webhook)** ve **kullanıcı yönetimi** gibi konulara odaklandık. İşte yaptıklarımız:  
+
+1. **İkinci bir sanal makine kurup Master-Slave bağlantısını ayarladık.**  
+   - Master makineden, yeni kurulan slave makineye **şifresiz SSH bağlantısı** kurmamız gerekti. Bunun için önce Master makinede SSH anahtarları oluşturduk:  
+     ```sh
+     ssh-keygen
+     ```  
+   - Ardından, oluşturduğumuz **private key**'i Jenkins’in **Credentials** bölümüne ekleyerek, bağlantıyı Jenkins üzerinden yönetebilir hale getirdik.  
+   - SSH bağlantısını test etmek için şu komutu çalıştırdık:  
+     ```sh
+     ssh -i <private_key_path> <username>@<slave_ip>
+     ```  
+   - Eğer bağlantı sırasında fingerprint doğrulaması yapılıyorsa, kabul edip ilerledik.  
+   - Jenkins’in slave makineye erişmesi için **SSH Agent Plugin**'i yükledik.  
+   - Son olarak, **Jenkins üzerinden yeni bir job** oluşturduk ve slave makinede çalıştığımızı doğrulamak için şu komutlardan birini çalıştırdık:  
+     ```sh
+     ip -a  
+     ifconfig  
+     cat /etc/hostname  
+     ```
+
+2. **Jenkins’in uzaktan tetiklenmesini sağladık (Remote Trigger - Webhook).**  
+   - Jenkins’i **webhook veya API çağrıları** ile otomatik tetikleyebilmek için **Generic Webhook Trigger Plugin**'i yükledik.  
+   - API üzerinden tetikleme için Jenkins içinde **bir token oluşturduk** ve bunu güvenli şekilde sakladık.  
+   - Tetikleyicinin çalışıp çalışmadığını test etmek için şu komutu kullandık:  
+     ```sh
+     curl -XPOST --user "admin:<token>" http://<jenkins_ip>/job/<job_name>/build?token=<token_name>
+     ```  
+   - Bu aşamada GitLab ile entegrasyon konusu konuşuldu, ancak detayına girmedik.  
+
+3. **Kullanıcı yönetimi ve yetkilendirme üzerine çalıştık.**  
+   - Öncelikle, **Jenkins konfigürasyon dosyalarının yedeğini almanın öneminden** bahsettik. Özellikle şu dosyanın yedeğini almak iyi bir fikir olabilir:  
+     ```sh
+     /var/lib/jenkins/config.xml
+     ```  
+   - **Yeni kullanıcıları Jenkins UI üzerinden oluşturduk.**  
+   - Yetkilendirme için **Role-Based Strategy Plugin**'i yükledik ve yetkilendirme seçeneklerine göz gezdirdik.  
+   - Kullanıcılara izin vermek için **User Matrix, Role-Based ve Item-Based permission** sistemlerini inceledik, ancak gerçek anlamda bir yetkilendirme yapmadık.  
+
+4. **Job'lara parametre eklemeyi öğrendik.**  
+   - Parametreli job'lar oluşturarak, build sırasında dışarıdan değişken alabilmeyi sağladık.  
+   - Parametrelere `${}` kullanarak erişebileceğimizi gördük.  
+
+---
+
+## **Ekstralar**  
+
+Ders arasında konuşulan ancak detayına inmediğimiz birkaç konu daha vardı. Bunları da buraya not olarak ekleyelim:  
+
+#### **Vagrant Nedir?**  
+Vagrant, sanal makineleri (*VirtualBox, VMware, Hyper-V gibi*) kolayca oluşturmak, yönetmek ve konfigüre etmek için kullanılan bir araçtır.  
+
+#### **LDAP (Lightweight Directory Access Protocol)**  
+Merkezi kimlik doğrulama ve yetkilendirme için kullanılan bir dizin protokolüdür.  
+
+#### **Active Directory (AD)**  
+Microsoft’un LDAP tabanlı kimlik yönetim sistemi olarak tanımlanabilir.
