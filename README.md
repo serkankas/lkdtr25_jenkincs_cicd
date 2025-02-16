@@ -1,4 +1,12 @@
-# Jenkins CI/CD
+# **Jenkins CI/CD Notları**  
+
+Bu notlar, **2025 yılı Mustafa Akgül Özgür Yazılım Kış Kampı** kapsamında verilen *Jenkins CI/CD* eğitimi sırasında tuttuğum kişisel notlardır. Başlangıçta ders içeriğini takip ederek ilerlemiş olup, daha sonraki bölümlerde **ilgi alanlarım doğrultusunda eklemeler, çıkarmalar ve yönlendirmeler içermektedir.**  
+
+Bu notlar **herhangi bir zorunluluk altında kalmadan, kişisel öğrenme sürecimi belgelemek amacıyla** yazılmıştır ve **özgür yazılım felsefesine uygun olarak herkesin faydalanabilmesi için paylaşılmaktadır.**  
+
+Eğer bu notlardan **alıntı yapacak veya paylaşacaksanız**, **kaynak göstermeyi göz önünde bulundurmanızı rica ederim.**  
+
+**Teşekkürler, iyi öğrenmeler!**
 
 ## Gün 1  
 
@@ -350,7 +358,7 @@ Tomcat yerine **kendi pipeline sürecimi oluşturmanın daha faydalı olacağın
 - **Otomatik olarak artifact oluşturulması**,  
 - **Son olarak bu artifactlerin ziplenip archive reposuna eklenmesi.**  
 
-📌 **Bu noktada artifact sürecine henüz geçilemedi.**  
+**Bu noktada artifact sürecine henüz geçilemedi.**  
 
 ### **3. Jenkins’in GitHub ile Bağlantısı Sağlandı**  
 - **GitHub SSH bağlantısı için yeni bir SSH key oluşturuldu ve GitHub’a eklendi.**  
