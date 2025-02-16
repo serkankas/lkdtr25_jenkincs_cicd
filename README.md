@@ -323,3 +323,77 @@ Jenkins **multi-node** yapısıyla çalışabilir. **Ek bir Linux makineyi "slav
 #### **Not:** Dikkatimi Çekmeyen Konular
 
 Bu dersin bir kısmında **Java ve Maven kullanılarak** örnekler yapıldı. Ancak **benim ilgimi çeken konular daha çok Git, versiyonlama ve multiple pipeline'ları birbirine bağlamak üzerine** olduğu için bu kısımlar üzerinde durmadım.
+
+# Gün 4  
+
+Bugünün konusu **Tomcat ve Java uygulamalarının Jenkins üzerinden çalıştırılmasıydı.**  
+Ancak **Java kısmı ilgimi çekmediği için** bu bölümleri not almadım.  
+Tomcat’in **Java için bir web server** rolü üstlendiğini düşündüğümüzde, **Python tarafında Gunicorn veya Daphne’nin benzer bir işlevi gördüğünü** söyleyebiliriz.  
+
+Tomcat yerine **kendi pipeline sürecimi oluşturmanın daha faydalı olacağını düşündüm** ve aşağıdaki adımları gerçekleştirdim.  
+
+---
+
+## **Yapılanlar**  
+
+### **1. Yeni bir Node Oluşturuldu**  
+- Yeni bir **Jenkins Node** eklendi ve **SSH bağlantısı** sağlandı.  
+- **SSH key oluştururken RSA yerine ED25519 kullanıldı.** (RSA ile bazı problemler yaşandı.)  
+
+### **2. GitHub Üzerinde 3 Yeni Repository Açıldı**  
+- `jenkins-test-archieve`  
+- `jenkins-test-backend`  
+- `jenkins-test-frontend`  
+
+**Bu reposların amacı:**  
+- **Backend veya frontend tarafında versiyon değişikliği yapıldığında**,  
+- **Otomatik olarak artifact oluşturulması**,  
+- **Son olarak bu artifactlerin ziplenip archive reposuna eklenmesi.**  
+
+📌 **Bu noktada artifact sürecine henüz geçilemedi.**  
+
+### **3. Jenkins’in GitHub ile Bağlantısı Sağlandı**  
+- **GitHub SSH bağlantısı için yeni bir SSH key oluşturuldu ve GitHub’a eklendi.**  
+- **Jenkins’in SSH ile bağlanabilmesi için gerekli ayarlamalar yapıldı.**  
+- **GitHub’ın fingerprint’leri Jenkins’in `known_hosts` dosyasına eklendi:**  
+    ```sh
+    sudo -u jenkins ssh-keyscan github.com >> /home/jenkins/.ssh/known_hosts
+    ```
+- **Git erişimi için SSH Credentials tanımlandı.**  
+
+### **4. Semantic Release Kurulumu ve Test Edilmesi**  
+- **Node.js, npm ve nvm kurulumu tamamlandı.**  
+- **Semantic Release için gerekli paketler yüklendi:**  
+    ```sh
+    npm install -g semantic-release semantic-release-cli @semantic-release/git @semantic-release/changelog @semantic-release/commit-analyzer @semantic-release/release-notes-generator
+    ```
+- **Semantic Release’in çalıştığı test edildi:**  
+    ```sh
+    npx semantic-release --dry-run
+    ```
+- **Jenkins’in çalıştığı node üzerinde doğru Node.js versiyonunun kullanıldığı kontrol edildi.**  
+
+### **5. Jenkins Jobları Oluşturuldu**  
+
+#### **Test için oluşturulan freestyle job**  
+- **Git repo bağlandı, branch olarak `main` seçildi.**  
+- **Şimdilik sadece `echo` komutu çalıştırılarak test edildi.**  
+- **Post-build adımı olarak "build other project" seçildi.**  
+
+#### **Release için oluşturulan freestyle job**  
+- **Git repo bağlandı, branch `main` seçildi.**  
+- **Build step olarak şu komut çalıştırıldı:**  
+    ```sh
+    npx semantic-release
+    ```
+- **Bu adımlar hem backend hem de frontend için uygulandı.**  
+
+---
+
+## **Sonuç ve Eksik Kalan Kısımlar**  
+- **Artifact sürecine geçilemedi, çünkü kursun süresi yetmedi.**  
+- **Semantic Release başarıyla kurulup Jenkins’e entegre edildi.**  
+- **Backend ve frontend projeleri için versiyonlama süreci test edildi.**  
+- **Jenkins üzerinden GitHub’a erişim SSH ile sağlandı.**  
+
+**Eğer süreç devam etseydi, artifactlerin oluşturulması ve archive reposuna eklenmesi üzerine çalışılacaktı.**  
