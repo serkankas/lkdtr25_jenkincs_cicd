@@ -159,3 +159,167 @@ Merkezi kimlik doğrulama ve yetkilendirme için kullanılan bir dizin protokol�
 
 #### **Active Directory (AD)**  
 Microsoft’un LDAP tabanlı kimlik yönetim sistemi olarak tanımlanabilir.
+
+# Gün 3  
+
+## **Pipeline Kullanımı ve Avantajları**  
+
+Jenkins Pipeline, CI/CD süreçlerini daha **kolay, yönetilebilir ve izlenebilir** hale getiren bir yapıdır.  
+- Hangi **task’in ne kadar sürdüğünü** ve **hangi aşamalardan geçtiğini** görebiliriz.  
+- **Declarative** veya **Scripted** pipeline olarak yazılabilir.  
+- Web arayüzü üzerinden pipeline yazarsak daha kolay müdahale edebiliriz, ancak dosya bazlı pipeline'larda değişiklik yapmak için repository'ye erişim gerekir.  
+- Kim hangi aşamalara erişebilir, hangi kodu değiştirebilir gibi kontroller yapılabilir.  
+
+### **Pipeline İçin Kullanışlı Sekmeler:**  
+- **Pipeline Overview:** Genel süreci gösterir.  
+- **Pipeline Steps:** Çalışan adımların detaylarını gösterir.  
+- **Pipeline Console:** Komut çıktılarının görülebileceği terminal ekranı.  
+- **Timing:** Hangi aşamanın ne kadar sürdüğünü gösterir.  
+
+**Daha iyi görselleştirme için:** *"Pipeline Stage View"* eklentisini yüklemek önerilir.  
+
+---
+
+## **Pipeline Örnekleri**  
+
+### **Environment Variable Kullanımı**  
+Pipeline içinde **environment değişkenleri** kullanarak değerler saklayabiliriz.  
+
+```groovy
+pipeline {
+    agent any
+    
+    environment {
+        KURS = "Jenkins ile CI/CD"
+        SECRET_01 = credentials('secret_01')
+    }
+
+    stages {
+        stage('Ortam Değişkenlerini Yazdır') {
+            steps {
+                sh 'echo ${KURS}'
+                sh 'echo ${SECRET_01}'  // Gizli credential burada görünmez.
+            }
+        }
+        ...
+    }
+}
+```
+
+## Not: Credential olarak saklanan değişkenler konsolda gözükmez, ancak bir dosyaya yazılarak artifact olarak saklanabilir.
+
+---
+
+## Username & Password Credentials Kullanımı
+
+Eğer bir **kullanıcı adı ve şifre** içeren credential kullanıyorsak, bunları aşağıdaki gibi pipeline içinde çağırabiliriz:
+
+### **Örnek: Kullanıcı Adı & Şifre Kullanımı**
+
+```groovy
+pipeline {
+    agent any
+    
+    environment {
+        SECRET_ID_PW = credentials('secret_user_idpw')
+    }
+
+    stages {
+        stage ('Kullanıcı Bilgilerini Kullanma') {
+            steps {
+                sh 'echo ${SECRET_ID_PW_USR}'  // Kullanıcı adı
+                sh 'echo ${SECRET_ID_PW_PSW}'  // Şifre
+            }
+        }
+        ...
+    }
+}
+```
+
+#### Dikkat: Credentials'lar terminal çıktısında görünmemesi için **direkt echo ile yazdırılmamalıdır.**
+
+---
+
+## Koşullu (Conditional) Pipeline Kullanımı
+
+Bazı aşamaların sadece **belli koşullarda** çalışmasını istiyorsak, **when** bloğunu kullanabiliriz:
+
+### **Örnek: Koşullu Pipeline Kullanımı**
+
+```groovy
+pipeline {
+    agent any
+    
+    parameters {
+        booleanParam(defaultValue: false, description: 'Bu aşama çalışsın mı?', name: 'EXECS')
+    }
+
+    stages {
+        stage('Koşullu Aşama') {
+            when {
+                allOf {
+                    expression { currentBuild.getNumber() % 2 == 1 } // Sadece tek numaralı build'lerde çalış
+                    expression { params.EXECS } // Kullanıcı checkbox işaretlediyse çalış
+                }
+            }
+            steps {
+                sh 'echo "Bu adım çalıştı!"'
+            }
+        }
+        ...
+    }
+}
+```
+
+#### **Not: Parametreler** build başlatıldıktan sonra ekranda görünür, yani **ilk build'de kullanılamaz.**
+
+---
+
+## Post Condition Kullanımı
+
+Pipeline sonunda belirli durumlara göre **otomatik aksiyon almak** için post bloğu kullanabiliriz:
+
+### **Örnek: Post Condition Kullanımı**
+
+```groovy
+pipeline {
+    agent any
+
+    stages {
+        ...
+    }
+
+    post {
+        always {
+            sh 'echo "Pipeline çalıştırıldı."'
+        }
+        success {
+            sh 'echo "Pipeline başarıyla tamamlandı."'
+        }
+        failure {
+            sh 'echo "Pipeline hata ile karşılaştı!"'
+        }
+        aborted {
+            sh 'echo "Pipeline çalışması iptal edildi."'
+        }
+    }
+}
+```
+
+#### **Not: Post koşulları** hem pipeline hem de **bireysel stage'ler** için kullanılabilir.
+
+---
+
+## Jenkins Agents (Slave Nodes)
+
+Jenkins **multi-node** yapısıyla çalışabilir. **Ek bir Linux makineyi "slave" olarak tanımlayarak**, Jenkins’in başka bir makinada da build çalıştırmasını sağlayabiliriz.
+
+### **Jenkins Slave Kurulumu:**
+
+* **Jenkins Dashboard → Manage Jenkins → Nodes** sekmesinden yeni bir node eklenir.
+* Master makineden **SSH ile bağlanarak** slave erişimi sağlanır.
+* **SSH Server ve Client** kurularak Jenkins’in bağlantı kurması sağlanır.
+
+#### **Not:** Dikkatimi Çekmeyen Konular
+
+Bu dersin bir kısmında **Java ve Maven kullanılarak** örnekler yapıldı. Ancak **benim ilgimi çeken konular daha çok Git, versiyonlama ve multiple pipeline'ları birbirine bağlamak üzerine** olduğu için bu kısımlar üzerinde durmadım.
